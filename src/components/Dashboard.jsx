@@ -230,38 +230,37 @@ const Dashboard = () => {
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               {currentView === "students" && (
-                <Grid item xs={12}>
-                  <Typography variant="h4">Students List</Typography>
-                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="h4">Students List</Typography>
                     <IconButton onClick={handleOpenAddStudent} color="primary">
                       Add Student
                     </IconButton>
-                  </Box>
-                  <StudentsList
-                    students={students}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                </Grid>
+                    <StudentsList
+                      students={students}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </Grid>
+                </>
               )}
               {currentView === "teachers" && (
-                <Grid item xs={12}>
-                  <Typography variant="h4">Teachers List</Typography>
-                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="h4">Teachers List</Typography>
                     <IconButton onClick={handleOpenAddTeacher} color="primary">
                       Add Teacher
                     </IconButton>
-                  </Box>
-                  <TeachersList
-                    teachers={teachers}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                </Grid>
+                    <TeachersList
+                      teachers={teachers}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </Grid>
+                </>
               )}
               {currentView === "profile" && (
                 <Grid item xs={12}>
-                  <Typography variant="h4">Profile</Typography>
                   <Profile />
                 </Grid>
               )}
@@ -269,6 +268,7 @@ const Dashboard = () => {
           </Container>
         </Box>
       </Box>
+
       <AddStudentModal open={openAddStudent} onClose={handleCloseAddStudent} />
       <AddTeacherModal open={openAddTeacher} onClose={handleCloseAddTeacher} />
     </ThemeProvider>
