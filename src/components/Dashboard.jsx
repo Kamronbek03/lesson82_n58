@@ -13,18 +13,13 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import BadgeIcon from "@mui/icons-material/Badge";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import PersonIcon from "@mui/icons-material/Person";
-import PeopleIcon from "@mui/icons-material/People";
-import AddStudentModal from "./AddStudentModal";
-import AddTeacherModal from "./AddTeacherModal";
-import Profile from "./Profile";
+import axios from "axios";
+import { MainListItems } from "./ListItems";
 import StudentsList from "./StudentsList";
 import TeachersList from "./TeachersList";
-import { mainListItems } from "./ListItems";
-import axios from "axios";
+import Profile from "./Profile";
+import AddStudentModal from "./AddStudentModal";
+import AddTeacherModal from "./AddTeacherModal";
 
 const drawerWidth = 240;
 
@@ -76,19 +71,20 @@ const defaultTheme = createTheme();
 
 const Dashboard = () => {
   const [open, setOpen] = useState(true);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [currentView, setCurrentView] = useState("students");
-  const [openAddStudent, setOpenAddStudent] = useState(false);
-  const [openAddTeacher, setOpenAddTeacher] = useState(false);
+  const [currentView, setCurrentView] = useState("dashboard");
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [openAddStudent, setOpenAddStudent] = useState(false);
+  const [openAddTeacher, setOpenAddTeacher] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [editingTeacher, setEditingTeacher] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [studentsResponse, teachersResponse] = await Promise.all([
-          axios.get("http://localhost:3001/students"),
-          axios.get("http://localhost:3001/teachers"),
+          axios.get("http://localhost:3000/students"),
+          axios.get("http://localhost:3000/teachers"),
         ]);
         setStudents(studentsResponse.data);
         setTeachers(teachersResponse.data);
@@ -104,20 +100,12 @@ const Dashboard = () => {
     setOpen(!open);
   };
 
-  const handleBadgeClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleMenuClick = (view) => {
+  const handleViewChange = (view) => {
     setCurrentView(view);
-    handleClose();
   };
 
   const handleOpenAddStudent = () => {
+    setEditingStudent(null);
     setOpenAddStudent(true);
   };
 
@@ -126,6 +114,7 @@ const Dashboard = () => {
   };
 
   const handleOpenAddTeacher = () => {
+    setEditingTeacher(null);
     setOpenAddTeacher(true);
   };
 
@@ -133,15 +122,44 @@ const Dashboard = () => {
     setOpenAddTeacher(false);
   };
 
-  const handleEdit = (id) => {
-    console.log("Edit", id);
-    // Handle edit logic
+  const handleEditStudent = (id) => {
+    const student = students.find((s) => s.id === id);
+    setEditingStudent(student);
+    setOpenAddStudent(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
-      console.log("Delete", id);
-      // Handle delete logic
+  const handleEditTeacher = (id) => {
+    const teacher = teachers.find((t) => t.id === id);
+    setEditingTeacher(teacher);
+    setOpenAddTeacher(true);
+  };
+
+  const handleDelete = async (id, type) => {
+    if (window.confirm(`Are you sure you want to delete this ${type}?`)) {
+      try {
+        if (type === "student") {
+          await axios.delete(`http://localhost:3000/students/${id}`);
+          setStudents(students.filter((s) => s.id !== id));
+        } else if (type === "teacher") {
+          await axios.delete(`http://localhost:3000/teachers/${id}`);
+          setTeachers(teachers.filter((t) => t.id !== id));
+        }
+      } catch (error) {
+        console.error("Error deleting data", error);
+      }
+    }
+  };
+
+  const refreshData = async () => {
+    try {
+      const [studentsResponse, teachersResponse] = await Promise.all([
+        axios.get("http://localhost:3000/students"),
+        axios.get("http://localhost:3000/teachers"),
+      ]);
+      setStudents(studentsResponse.data);
+      setTeachers(teachersResponse.data);
+    } catch (error) {
+      console.error("Error fetching data", error);
     }
   };
 
@@ -176,26 +194,6 @@ const Dashboard = () => {
             >
               Dashboard
             </Typography>
-            <IconButton color="inherit" onClick={handleBadgeClick}>
-              <BadgeIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem onClick={() => handleMenuClick("students")}>
-                <PeopleIcon />
-                Students
-              </MenuItem>
-              <MenuItem onClick={() => handleMenuClick("teachers")}>
-                <PeopleIcon />
-                Teachers
-              </MenuItem>
-              <MenuItem onClick={() => handleMenuClick("profile")}>
-                <PersonIcon /> Profile
-              </MenuItem>
-            </Menu>
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
@@ -212,7 +210,9 @@ const Dashboard = () => {
             </IconButton>
           </Toolbar>
           <Divider />
-          <List component="nav">{mainListItems}</List>
+          <List component="nav">
+            <MainListItems handleClick={handleViewChange} />
+          </List>
         </Drawer>
         <Box
           component="main"
@@ -229,35 +229,50 @@ const Dashboard = () => {
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
-              {currentView === "students" && (
+              {currentView === "dashboard" && (
                 <>
                   <Grid item xs={12}>
-                    <Typography variant="h4">Students List</Typography>
-                    <IconButton onClick={handleOpenAddStudent} color="primary">
-                      Add Student
-                    </IconButton>
+                    <Typography variant="h4">Dashboard</Typography>
+                    <Typography variant="h6">Students</Typography>
                     <StudentsList
                       students={students}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
+                      onEdit={handleEditStudent}
+                      onDelete={(id) => handleDelete(id, "student")}
+                    />
+                    <Typography variant="h6">Teachers</Typography>
+                    <TeachersList
+                      teachers={teachers}
+                      onEdit={handleEditTeacher}
+                      onDelete={(id) => handleDelete(id, "teacher")}
                     />
                   </Grid>
                 </>
               )}
+              {currentView === "students" && (
+                <Grid item xs={12}>
+                  <Typography variant="h4">Students List</Typography>
+                  <IconButton onClick={handleOpenAddStudent} color="primary">
+                    Add Student
+                  </IconButton>
+                  <StudentsList
+                    students={students}
+                    onEdit={handleEditStudent}
+                    onDelete={(id) => handleDelete(id, "student")}
+                  />
+                </Grid>
+              )}
               {currentView === "teachers" && (
-                <>
-                  <Grid item xs={12}>
-                    <Typography variant="h4">Teachers List</Typography>
-                    <IconButton onClick={handleOpenAddTeacher} color="primary">
-                      Add Teacher
-                    </IconButton>
-                    <TeachersList
-                      teachers={teachers}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  </Grid>
-                </>
+                <Grid item xs={12}>
+                  <Typography variant="h4">Teachers List</Typography>
+                  <IconButton onClick={handleOpenAddTeacher} color="primary">
+                    Add Teacher
+                  </IconButton>
+                  <TeachersList
+                    teachers={teachers}
+                    onEdit={handleEditTeacher}
+                    onDelete={(id) => handleDelete(id, "teacher")}
+                  />
+                </Grid>
               )}
               {currentView === "profile" && (
                 <Grid item xs={12}>
@@ -268,9 +283,18 @@ const Dashboard = () => {
           </Container>
         </Box>
       </Box>
-
-      <AddStudentModal open={openAddStudent} onClose={handleCloseAddStudent} />
-      <AddTeacherModal open={openAddTeacher} onClose={handleCloseAddTeacher} />
+      <AddStudentModal
+        open={openAddStudent}
+        onClose={handleCloseAddStudent}
+        onSave={refreshData}
+        studentData={editingStudent}
+      />
+      <AddTeacherModal
+        open={openAddTeacher}
+        onClose={handleCloseAddTeacher}
+        onSave={refreshData}
+        teacherData={editingTeacher}
+      />
     </ThemeProvider>
   );
 };

@@ -1,54 +1,108 @@
-import React, { useState } from "react";
-import { Modal, Box, Button, TextField, Typography } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
+import axios from "axios";
 
-const AddStudentModal = ({ open, onClose }) => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [group, setGroup] = useState("");
+const AddStudentModal = ({ open, onClose, onSave, studentData }) => {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    group: "",
+  });
 
-  const handleSubmit = () => {
-    console.log("Student added:", { firstName, lastName, group });
+  useEffect(() => {
+    if (studentData) {
+      setFormData(studentData);
+    } else {
+      setFormData({ firstName: "", lastName: "", group: "" });
+    }
+  }, [studentData]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    if (studentData) {
+      // Update existing student
+      await axios.put(
+        `http://localhost:3000/students/${studentData.id}`,
+        formData
+      );
+    } else {
+      // Add new student
+      const response = await axios.get("http://localhost:3000/students");
+      const students = response.data;
+      const newId = students.length
+        ? Math.max(...students.map((s) => parseInt(s.id))) + 1
+        : 1;
+      await axios.post("http://localhost:3000/students", {
+        ...formData,
+        id: newId,
+      });
+    }
+    onSave();
     onClose();
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={{ ...style }}>
-        <Typography variant="h6">Add Student</Typography>
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>{studentData ? "Edit Student" : "Add Student"}</DialogTitle>
+      <DialogContent>
         <TextField
+          autoFocus
+          margin="dense"
+          name="firstName"
           label="First Name"
+          type="text"
           fullWidth
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          value={formData.firstName}
+          onChange={handleChange}
         />
         <TextField
+          margin="dense"
+          name="lastName"
           label="Last Name"
+          type="text"
           fullWidth
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          value={formData.lastName}
+          onChange={handleChange}
         />
-        <TextField
-          label="Group"
-          fullWidth
-          value={group}
-          onChange={(e) => setGroup(e.target.value)}
-        />
-        <Button onClick={handleSubmit}>Add</Button>
-        <Button onClick={onClose}>Cancel</Button>
-      </Box>
-    </Modal>
+        <FormControl fullWidth margin="dense">
+          <InputLabel id="group-label">Group</InputLabel>
+          <Select
+            labelId="group-label"
+            name="group"
+            value={formData.group}
+            onChange={handleChange}
+          >
+            <MenuItem value="React-11">React-11</MenuItem>
+            <MenuItem value="React-13">React-13</MenuItem>
+            <MenuItem value="React-17">React-17</MenuItem>
+            <MenuItem value="React-58">React-58</MenuItem>
+          </Select>
+        </FormControl>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="secondary">
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} color="primary">
+          {studentData ? "Save" : "Add"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
-};
-
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  boxShadow: 24,
-  p: 4,
 };
 
 export default AddStudentModal;

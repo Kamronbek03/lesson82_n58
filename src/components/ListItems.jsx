@@ -6,27 +6,27 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import PeopleIcon from "@mui/icons-material/People";
 
-export const mainListItems = (
+export const MainListItems = ({ handleClick }) => (
   <>
-    <ListItemButton>
+    <ListItemButton onClick={() => handleClick("dashboard")}>
       <ListItemIcon>
         <DashboardIcon />
       </ListItemIcon>
       <ListItemText primary="Dashboard" />
     </ListItemButton>
-    <ListItemButton>
+    <ListItemButton onClick={() => handleClick("students")}>
       <ListItemIcon>
         <PeopleIcon />
       </ListItemIcon>
       <ListItemText primary="Students" />
     </ListItemButton>
-    <ListItemButton>
+    <ListItemButton onClick={() => handleClick("teachers")}>
       <ListItemIcon>
         <PeopleIcon />
       </ListItemIcon>
       <ListItemText primary="Teachers" />
     </ListItemButton>
-    <ListItemButton>
+    <ListItemButton onClick={() => handleClick("profile")}>
       <ListItemIcon>
         <PersonIcon />
       </ListItemIcon>
