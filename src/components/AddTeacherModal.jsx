@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import {
   Dialog,
   DialogTitle,
@@ -11,9 +12,10 @@ import {
   InputLabel,
   FormControl,
 } from "@mui/material";
-import axios from "axios";
+import { addTeacher } from "../features/teachersSlice";
 
-const AddTeacherModal = ({ open, onClose, onSave, teacherData }) => {
+const AddTeacherModal = ({ open, onClose, teacherData }) => {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -33,26 +35,12 @@ const AddTeacherModal = ({ open, onClose, onSave, teacherData }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (teacherData) {
-      // Update existing teacher
-      await axios.put(
-        `http://localhost:3000/teachers/${teacherData.id}`,
-        formData
-      );
+      // Dispatch updateTeacher action (not implemented in this example)
     } else {
-      // Add new teacher
-      const response = await axios.get("http://localhost:3000/teachers");
-      const teachers = response.data;
-      const newId = teachers.length
-        ? Math.max(...teachers.map((t) => parseInt(t.id))) + 1
-        : 1;
-      await axios.post("http://localhost:3000/teachers", {
-        ...formData,
-        id: newId,
-      });
+      dispatch(addTeacher(formData));
     }
-    onSave();
     onClose();
   };
 

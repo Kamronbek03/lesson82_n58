@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import {
   Dialog,
   DialogTitle,
@@ -11,9 +12,10 @@ import {
   InputLabel,
   FormControl,
 } from "@mui/material";
-import axios from "axios";
+import { addStudent } from "../features/studentsSlice";
 
-const AddStudentModal = ({ open, onClose, onSave, studentData }) => {
+const AddStudentModal = ({ open, onClose, studentData }) => {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -32,26 +34,11 @@ const AddStudentModal = ({ open, onClose, onSave, studentData }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (studentData) {
-      // Update existing student
-      await axios.put(
-        `http://localhost:3000/students/${studentData.id}`,
-        formData
-      );
     } else {
-      // Add new student
-      const response = await axios.get("http://localhost:3000/students");
-      const students = response.data;
-      const newId = students.length
-        ? Math.max(...students.map((s) => parseInt(s.id))) + 1
-        : 1;
-      await axios.post("http://localhost:3000/students", {
-        ...formData,
-        id: newId,
-      });
+      dispatch(addStudent(formData));
     }
-    onSave();
     onClose();
   };
 
